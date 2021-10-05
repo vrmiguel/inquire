@@ -7,6 +7,7 @@ fn main() {
         let data = FileData::read(s.into()).unwrap();
 
         dbg!(data.mime_type());
+        dbg!(data.owner_user());
         println!("{}", data.size());
     }
 }

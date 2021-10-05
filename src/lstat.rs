@@ -21,15 +21,15 @@ impl Lstat {
         })
     }
 
-    pub fn mode(&self) -> u32 {
+    pub const fn mode(&self) -> u32 {
         self.inner.st_mode
     }
 
-    pub fn size(&self) -> i64 {
+    pub const fn size(&self) -> i64 {
         self.inner.st_size
     }
 
-    pub fn block_size(&self) -> i64 {
+    pub const fn block_size(&self) -> i64 {
         self.inner.st_blksize
     }
 
@@ -47,6 +47,14 @@ impl Lstat {
 
     pub fn modified(&self) -> u64 {
         self.inner.st_mtime as u64
+    }
+
+    pub fn owner_user_id(&self) -> u32 {
+        self.inner.st_uid
+    }
+
+    pub fn owner_group_id(&self) -> u32 {
+        self.inner.st_gid
     }
 }
 
