@@ -7,9 +7,10 @@ fn main() {
         let data = FileData::read(s.into()).unwrap();
 
         // let _ = dbg!(data.mime_type());
-        // dbg!(data.owner_user());
-        // dbg!(data.owner_group());
+        dbg!(data.mime_type2());
+        dbg!(data.owner_user());
+        dbg!(data.owner_group());
         println!("{}", data.permissions());
-        // println!("{}", data.size());
+        println!("{}", data.size());
     }
 }
