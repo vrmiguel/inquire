@@ -8,6 +8,7 @@ fn main() {
 
         dbg!(data.mime_type());
         dbg!(data.owner_user());
+        dbg!(data.owner_group());
         println!("{}", data.size());
     }
 }

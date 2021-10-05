@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use infer::Type;
 
-use crate::{bytes::Bytes, error::Result, lstat::Lstat, user};
+use crate::{bytes::Bytes, error::Result, lstat::Lstat, group, user};
 
 pub struct FileData {
     path: PathBuf,
@@ -33,5 +33,11 @@ impl FileData {
         let user_id = self.stat.owner_user_id();
 
         user::get_username(user_id)
+    }
+
+    pub fn owner_group(&self) -> Option<String> {
+        let group_id = self.stat.owner_group_id();
+
+        group::get_group_name(group_id)
     }
 }
