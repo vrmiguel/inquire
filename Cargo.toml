@@ -14,6 +14,7 @@ thiserror = "1.0.29"
 filemagic = "0.12.3"
 infer = "0.5.0"
 unix_mode = "0.1.2"
+goblin = "0.4.3"
 
 [profile.release]
 lto = true

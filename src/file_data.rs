@@ -7,7 +7,7 @@ use std::{
 use filemagic::Magic;
 use infer::Type;
 
-use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
+use crate::{bytes::Bytes, dylib, error::Result, group, lstat::Lstat, user};
 
 pub struct FileData {
     path: PathBuf,
@@ -43,6 +43,14 @@ impl Display for FileData {
 
         if let Some(owner_group) = self.owner_group() {
             writeln!(f, "owner's group: {}", owner_group)?;
+        }
+
+        if let Some(libraries) = dylib::read_dynamic_dependencies(&self.path) {
+            // Placeholder text, gotta change this later
+            writeln!(f, "[libraries]")?;
+            for library in libraries {
+                writeln!(f, "· {}", library)?;
+            }
         }
 
         Ok(())
