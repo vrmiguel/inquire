@@ -4,7 +4,7 @@ use inquire::FileData;
 
 fn main() {
     if let Some(s) = env::args_os().nth(1) {
-        let data = FileData::read(s.into()).unwrap();
+        let data = FileData::read(s).unwrap();
 
         // // let _ = dbg!(data.mime_type());
         // dbg!(data.mime_type2());

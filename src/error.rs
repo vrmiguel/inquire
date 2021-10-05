@@ -10,7 +10,7 @@ pub enum Error {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("libmagic error: {0}")]
-    Magic(#[from] filemagic::FileMagicError)
+    Magic(#[from] filemagic::FileMagicError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

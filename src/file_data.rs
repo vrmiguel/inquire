@@ -1,6 +1,10 @@
-use std::{fmt::Display, fs, path::{Path, PathBuf}};
+use std::{
+    fmt::Display,
+    fs,
+    path::{Path, PathBuf},
+};
 
-use filemagic::{Magic, flags::Flags};
+use filemagic::Magic;
 use infer::Type;
 
 use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
@@ -8,42 +12,51 @@ use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
 pub struct FileData {
     path: PathBuf,
     stat: Lstat,
-    magic: Option<Magic>
+    magic: Option<Magic>,
+}
+
+fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    for line in mime_msg.split(',') {
+        writeln!(f, "· {}", line.trim())?;
+    }
+
+    Ok(())
 }
 
 impl Display for FileData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Path: `{0}`", self.path.display())?;
-        
+        writeln!(f, "[{}]", self.path.display())?;
+
         if let Some(mime) = self.libmagic_mime_type() {
-            writeln!(f, "Type: `{0}`", mime)?;
-        } else {
-            if let Ok(Some((mime, ext))) = self.mime_type() {
-                writeln!(f, "Type: `{} {}`", mime, ext)?;
-            }
+            libmagic_display(mime, f)?;
+        } else if let Some(mime) = self.fallback_mime_type() {
+            writeln!(f, "type: {}", mime)?;
         }
 
-        writeln!(f, "Bytes: `{}`", self.size())?;
+        writeln!(f, "size: {}", self.size())?;
 
-        writeln!(f, "Permissions: `{}`", self.permissions())?;
+        writeln!(f, "permissions: {}", self.permissions())?;
 
         if let Some(owner_user) = self.owner_user() {
-            writeln!(f, "Owner's user: `{}`", owner_user)?;
+            writeln!(f, "owner's username: {}", owner_user)?;
         }
 
         if let Some(owner_group) = self.owner_group() {
-            writeln!(f, "Owner's owner group: `{}`", owner_group)?;
+            writeln!(f, "owner's group: {}", owner_group)?;
         }
 
         Ok(())
     }
 }
 
-pub type MaybeMime<'a> = Option<(&'a str, &'a str)>;
-
 impl FileData {
-    pub fn read(path: PathBuf) -> Result<Self> {
-
+    /// ```rust
+    /// use inquire::FileData;
+    ///
+    /// let cargo_toml = FileData::read("Cargo.toml").unwrap();
+    /// println!("{}", cargo_toml.size());
+    /// ```
+    pub fn read(path: impl AsRef<Path>) -> Result<Self> {
         let path = fs::canonicalize(path)?;
 
         let init_magic = || {
@@ -53,26 +66,29 @@ impl FileData {
             Some(magic)
         };
 
-
         Ok(Self {
             stat: Lstat::lstat(&path)?,
             path,
-            magic: init_magic()
+            magic: init_magic(),
         })
     }
 
-    pub fn mime_type(&self) -> Result<MaybeMime> {
-        let mime_and_extension = |t: Type| (t.mime_type(), t.extension());
-
-        Ok(infer::get_from_path(&self.path)?.map(mime_and_extension))
-    }
-
+    /// Attempts to read the file's MIME type through libmagic.
     pub fn libmagic_mime_type(&self) -> Option<String> {
         if let Some(ref magic) = self.magic {
             return magic.file(&self.path).ok();
         }
 
         None
+    }
+
+    /// Attempts to read the file's MIME type through the `infer` crate.
+    /// This is used as a fallback method since getting this data through libmagic
+    /// yields more information.
+    pub fn fallback_mime_type(&self) -> Option<&str> {
+        let mime = |t: Type| t.mime_type();
+
+        infer::get_from_path(&self.path).ok()?.map(mime)
     }
 
     pub fn size(&self) -> Bytes {
