@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use infer::Type;
 
-use crate::{bytes::Bytes, error::Result, lstat::Lstat, group, user};
+use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
 
 pub struct FileData {
     path: PathBuf,
@@ -39,5 +39,9 @@ impl FileData {
         let group_id = self.stat.owner_group_id();
 
         group::get_group_name(group_id)
+    }
+
+    pub fn permissions(&self) -> String {
+        unix_mode::to_string(self.stat.mode())
     }
 }

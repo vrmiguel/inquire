@@ -69,6 +69,7 @@ dependencies = [
  "libc",
  "tempfile",
  "thiserror",
+ "unix_mode",
 ]
 
 [[package]]
@@ -209,6 +210,12 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "unix_mode"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e0c0d1a8bc250d3f72da7c7b004a99899f7795cc6e8209aeaed1a9485563167"
 
 [[package]]
 name = "uuid"

@@ -37,30 +37,30 @@ impl Lstat {
         Permissions::from_mode(self.mode())
     }
 
-    pub fn blocks(&self) -> i64 {
+    pub const fn blocks(&self) -> i64 {
         self.inner.st_blocks
     }
 
-    pub fn accessed(&self) -> u64 {
+    pub const fn accessed(&self) -> u64 {
         self.inner.st_atime as u64
     }
 
-    pub fn modified(&self) -> u64 {
+    pub const fn modified(&self) -> u64 {
         self.inner.st_mtime as u64
     }
 
-    pub fn owner_user_id(&self) -> u32 {
+    pub const fn owner_user_id(&self) -> u32 {
         self.inner.st_uid
     }
 
-    pub fn owner_group_id(&self) -> u32 {
+    pub const fn owner_group_id(&self) -> u32 {
         self.inner.st_gid
     }
 }
 
 fn _lstat(path: &Path) -> Result<libc::stat> {
     let c_path = CString::new(path.as_os_str().as_bytes())?;
-    // The all-zero byte-pattern is a valid `struct stat`
+    // Safety: The all-zero byte-pattern is a valid `struct stat`
     let mut stat_buf = unsafe { mem::zeroed() };
 
     if -1 == unsafe { lstat(c_path.as_ptr(), &mut stat_buf) } {

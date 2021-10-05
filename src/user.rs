@@ -1,4 +1,4 @@
-use std::{ffi::{CStr}, mem, ptr};
+use std::{ffi::CStr, mem, ptr};
 
 use libc::{getpwuid_r, passwd};
 
@@ -19,8 +19,7 @@ pub fn get_username(uid: u32) -> Option<String> {
     let mut result = ptr::null_mut();
     let mut passwd: passwd = unsafe { mem::zeroed() };
 
-    let status =
-        unsafe { getpwuid_r(uid, &mut passwd, buf.as_mut_ptr(), buf.len(), &mut result) };
+    let status = unsafe { getpwuid_r(uid, &mut passwd, buf.as_mut_ptr(), buf.len(), &mut result) };
 
     if status == 0 && !result.is_null() {
         // If getpwuid_r succeeded, let's get the username from it
