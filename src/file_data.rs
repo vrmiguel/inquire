@@ -6,6 +6,7 @@ use std::{
 
 use filemagic::Magic;
 use goblin::Object;
+use memmap::MmapOptions;
 use infer::Type;
 use libc::S_IXUSR;
 
@@ -132,13 +133,6 @@ impl FileData {
     }
 
     pub fn read_dynamic_dependencies(&self) -> Option<Vec<String>> {
-        // Parsing the file's dynamic dependencies requires us to read all of the file's data into memory.
-        // By the default, we won't do that if the file's bigger than 100MB
-        // TODO: add a CLI option to allow reading more than this
-        if self.stat.size() >= 100_000_000 {
-            return None;
-        }
-
         let clone_libs = |libs: Vec<&str>| libs.into_iter().map(ToOwned::to_owned).collect();
 
         let get_libraries = |obj| -> Option<Vec<String>> {
@@ -149,9 +143,9 @@ impl FileData {
             }
         };
 
-        // TODO: try to make this without reading the whole file into memory
-        let bytes = fs::read(&self.path).ok()?;
+        let file = fs::File::open(&self.path).ok()?;
+        let map = unsafe { MmapOptions::new().map(&file) }.ok()?;
 
-        Object::parse(&bytes).ok().and_then(get_libraries)
+        Object::parse(&map).ok().and_then(get_libraries)
     }
 }
