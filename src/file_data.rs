@@ -5,9 +5,11 @@ use std::{
 };
 
 use filemagic::Magic;
+use goblin::Object;
 use infer::Type;
+use libc::S_IXUSR;
 
-use crate::{bytes::Bytes, dylib, error::Result, group, lstat::Lstat, user};
+use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
 
 pub struct FileData {
     path: PathBuf,
@@ -45,11 +47,13 @@ impl Display for FileData {
             writeln!(f, "owner's group: {}", owner_group)?;
         }
 
-        if let Some(libraries) = dylib::read_dynamic_dependencies(&self.path) {
-            // Placeholder text, gotta change this later
-            writeln!(f, "[libraries]")?;
-            for library in libraries {
-                writeln!(f, "· {}", library)?;
+        if self.is_executable() {
+            if let Some(libraries) = self.read_dynamic_dependencies() {
+                // Placeholder text, gotta change this later
+                writeln!(f, "[libraries]")?;
+                for library in libraries {
+                    writeln!(f, "· {}", library)?;
+                }
             }
         }
 
@@ -83,11 +87,9 @@ impl FileData {
 
     /// Attempts to read the file's MIME type through libmagic.
     pub fn libmagic_mime_type(&self) -> Option<String> {
-        if let Some(ref magic) = self.magic {
-            return magic.file(&self.path).ok();
-        }
+        let file = |magic: &Magic| magic.file(&self.path).ok();
 
-        None
+        self.magic.as_ref().and_then(file)
     }
 
     /// Attempts to read the file's MIME type through the `infer` crate.
@@ -117,5 +119,39 @@ impl FileData {
 
     pub fn permissions(&self) -> String {
         unix_mode::to_string(self.stat.mode())
+    }
+
+    pub fn is_application(&self) -> bool {
+        let mime_type = self.fallback_mime_type().unwrap_or_default();
+
+        mime_type.starts_with("application")
+    }
+
+    pub fn is_executable(&self) -> bool {
+        (self.stat.mode() & S_IXUSR) != 0
+    }
+
+    pub fn read_dynamic_dependencies(&self) -> Option<Vec<String>> {
+        // Parsing the file's dynamic dependencies requires us to read all of the file's data into memory.
+        // By the default, we won't do that if the file's bigger than 100MB
+        // TODO: add a CLI option to allow reading more than this
+        if self.stat.size() >= 100_000_000 {
+            return None;
+        }
+
+        let clone_libs = |libs: Vec<&str>| libs.into_iter().map(ToOwned::to_owned).collect();
+
+        let get_libraries = |obj| -> Option<Vec<String>> {
+            match obj {
+                Object::Elf(elf) => Some(clone_libs(elf.libraries)),
+                Object::PE(pe) => Some(clone_libs(pe.libraries)),
+                _ => None,
+            }
+        };
+
+        // TODO: try to make this without reading the whole file into memory
+        let bytes = fs::read(&self.path).ok()?;
+
+        Object::parse(&bytes).ok().and_then(get_libraries)
     }
 }
