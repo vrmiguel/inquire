@@ -6,12 +6,13 @@ use std::{
 
 use filemagic::Magic;
 use goblin::Object;
-use memmap::MmapOptions;
 use infer::Type;
-use libc::S_IXUSR;
+use libc::{S_IRWXG, S_IRWXO, S_IRWXU, S_IXUSR};
+use memmap::MmapOptions;
 
 use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
 
+#[non_exhaustive]
 pub struct FileData {
     path: PathBuf,
     stat: Lstat,
@@ -38,14 +39,15 @@ impl Display for FileData {
 
         writeln!(f, "size: {}", self.size())?;
 
-        writeln!(f, "permissions: {}", self.permissions())?;
+        let (mode, permission) = self.permissions();
+        writeln!(f, "permissions: {} ({:o})", permission, mode)?;
 
-        if let Some(owner_user) = self.owner_user() {
-            writeln!(f, "owner's username: {}", owner_user)?;
+        if let Some((uid, username)) = self.owner_user() {
+            writeln!(f, "owner: {} ({})", username, uid)?;
         }
 
-        if let Some(owner_group) = self.owner_group() {
-            writeln!(f, "owner's group: {}", owner_group)?;
+        if let Some((gid, group_name)) = self.owner_group() {
+            writeln!(f, "owner's group: {} ({})", group_name, gid)?;
         }
 
         if self.is_executable() {
@@ -102,36 +104,50 @@ impl FileData {
         infer::get_from_path(&self.path).ok()?.map(mime)
     }
 
+    /// Returns the size of the file in a Display-capable struct
     pub fn size(&self) -> Bytes {
         Bytes::new(self.stat.size() as u64)
     }
 
-    pub fn owner_user(&self) -> Option<String> {
+    /// Returns the user id (uid) and username of the user that owns the file represented by `self`.
+    pub fn owner_user(&self) -> Option<(u32, String)> {
         let user_id = self.stat.owner_user_id();
 
-        user::get_username(user_id)
+        user::get_username(user_id).map(|username| (user_id, username))
     }
 
-    pub fn owner_group(&self) -> Option<String> {
+    /// Returns the group id (gid) and group name of the group that contains the owner of the file represented by `self`.
+    pub fn owner_group(&self) -> Option<(u32, String)> {
         let group_id = self.stat.owner_group_id();
 
-        group::get_group_name(group_id)
+        group::get_group_name(group_id).map(|group_name| (group_id, group_name))
     }
 
-    pub fn permissions(&self) -> String {
-        unix_mode::to_string(self.stat.mode())
+    /// Returns the raw permission bits of this file, alongside a `ls`-like representation of said file permissions.
+    pub fn permissions(&self) -> (u32, String) {
+        let mode = self.stat.mode();
+        (
+            mode & (S_IRWXU | S_IRWXG | S_IRWXO),
+            unix_mode::to_string(mode),
+        )
     }
 
+    /// Returns true if this file is in the `application`
     pub fn is_application(&self) -> bool {
         let mime_type = self.fallback_mime_type().unwrap_or_default();
 
-        mime_type.starts_with("application")
+        //                          cation
+        mime_type.starts_with("appli")
     }
 
+    /// Returns true if this file has the executable bit turned on
     pub fn is_executable(&self) -> bool {
         (self.stat.mode() & S_IXUSR) != 0
     }
 
+    /// If this file is a dynamically-linked binary, this file will attempt to retrieve the
+    /// libraries on which the file depends. Note that, unlike tools like `ldd`, this function will only
+    /// return the direct dependencies of a file. Dependencies of a dependency will not be included.
     pub fn read_dynamic_dependencies(&self) -> Option<Vec<String>> {
         let clone_libs = |libs: Vec<&str>| libs.into_iter().map(ToOwned::to_owned).collect();
 

@@ -17,6 +17,7 @@ use libc::{getpwuid_r, passwd};
 pub fn get_username(uid: u32) -> Option<String> {
     let mut buf = [0; 2048];
     let mut result = ptr::null_mut();
+    // Safety: the all-zero byte pattern is a valid struct passwd
     let mut passwd: passwd = unsafe { mem::zeroed() };
 
     let status = unsafe { getpwuid_r(uid, &mut passwd, buf.as_mut_ptr(), buf.len(), &mut result) };
