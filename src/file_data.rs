@@ -9,6 +9,8 @@ use goblin::Object;
 use infer::Type;
 use libc::{S_IRWXG, S_IRWXO, S_IRWXU, S_IXUSR};
 use memmap::MmapOptions;
+use tabular::{Row, Table};
+// use terminal_size::{Width, terminal_size};
 
 use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
 
@@ -18,6 +20,10 @@ pub struct FileData {
     stat: Lstat,
     magic: Option<Magic>,
 }
+
+// fn terminal_width() -> Option<u16> {
+//     terminal_size().map(|(Width(w), _height)| w)
+// }
 
 fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     for line in mime_msg.split(',') {
@@ -31,36 +37,59 @@ impl Display for FileData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "[{}]", self.path.display())?;
 
+        let mut table = Table::new("{:<}\t\t{:<}\t{:<}");
+
         if let Some(mime) = self.libmagic_mime_type() {
             libmagic_display(mime, f)?;
         } else if let Some(mime) = self.fallback_mime_type() {
-            writeln!(f, "type: {}", mime)?;
-        }
-
-        writeln!(f, "size: {}", self.size())?;
-
-        let (mode, permission) = self.permissions();
-        writeln!(f, "permissions: {} ({:o})", permission, mode)?;
-
-        if let Some((uid, username)) = self.owner_user() {
-            writeln!(f, "owner: {} ({})", username, uid)?;
-        }
-
-        if let Some((gid, group_name)) = self.owner_group() {
-            writeln!(f, "owner's group: {} ({})", group_name, gid)?;
+            table.add_row(Row::new().with_cell("type:").with_cell(mime).with_cell(""));
         }
 
         if self.is_executable() {
             if let Some(libraries) = self.read_dynamic_dependencies() {
-                // Placeholder text, gotta change this later
-                writeln!(f, "[libraries]")?;
+                writeln!(f, "\n[dependencies]")?;
                 for library in libraries {
                     writeln!(f, "· {}", library)?;
                 }
             }
         }
 
-        Ok(())
+        writeln!(f, "\n[file info]")?;
+
+        table.add_row(
+            Row::new()
+                .with_cell("size:")
+                .with_cell(self.size())
+                .with_cell(""),
+        );
+
+        let (mode, permission) = self.permissions();
+        table.add_row(
+            Row::new()
+                .with_cell("permissions:")
+                .with_cell(permission)
+                .with_cell(format!("0{:o}", mode)),
+        );
+
+        if let Some((uid, username)) = self.owner_user() {
+            table.add_row(
+                Row::new()
+                    .with_cell("owner:")
+                    .with_cell(username)
+                    .with_cell(uid),
+            );
+        }
+
+        if let Some((gid, group_name)) = self.owner_group() {
+            table.add_row(
+                Row::new()
+                    .with_cell("owner's group:")
+                    .with_cell(group_name)
+                    .with_cell(gid),
+            );
+        }
+
+        write!(f, "{}", table)
     }
 }
 

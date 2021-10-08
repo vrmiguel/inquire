@@ -3,20 +3,27 @@
 ## Example usage
 
 ```
-❯ inquire $(which rg)
-[/usr/bin/rg]
-· ELF 64-bit LSB pie executable
+❯ inquire $(which gcc)
+[/usr/bin/gcc]
+· ELF 64-bit LSB executable
 · x86-64
 · version 1 (SYSV)
 · dynamically linked
 · interpreter /lib64/ld-linux-x86-64.so.2
-· BuildID[sha1]=b03ef3339bd12b330f2e3d5973613dedd8581cab
+· BuildID[sha1]=d55fe5f225672a0fb6061c61ab3865a4c8094d4b
 · for GNU/Linux 4.4.0
 · stripped
-size: 4.55 MB
-permissions: -rwxr-xr-x
-owner's username: root
-owner's group: root
+
+[dependencies]
+· libm.so.6
+· libc.so.6
+· ld-linux-x86-64.so.2
+
+[file info]
+size:                   1.25 MB   
+permissions:            -rwxr-xr-x      0755
+owner:                  root            0
+owner's group:          root            0
 ```
 
 ## To-do list
@@ -27,5 +34,6 @@ owner's group: root
 - [x] Show the file permissions
 - [x] Show the username of the file's owner
 - [x] Show the user group of the file's owner
+- [x] If the file is an executable, try to show its dynamic dependencies, if any exist
 - [ ] Show last modified date
 - [ ] Show last accessed date
