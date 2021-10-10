@@ -12,7 +12,7 @@ use memmap::MmapOptions;
 use tabular::{Row, Table};
 // use terminal_size::{Width, terminal_size};
 
-use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, user};
+use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, time_fmt::format_timestamp, user};
 
 #[non_exhaustive]
 pub struct FileData {
@@ -21,11 +21,7 @@ pub struct FileData {
     magic: Option<Magic>,
 }
 
-// fn terminal_width() -> Option<u16> {
-//     terminal_size().map(|(Width(w), _height)| w)
-// }
-
-fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     for line in mime_msg.split(',') {
         writeln!(f, "· {}", line.trim())?;
     }
@@ -34,7 +30,7 @@ fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter<'_>) -> std::f
 }
 
 impl Display for FileData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "[{}]", self.path.display())?;
 
         let mut table = Table::new("{:<}\t\t{:<}\t{:<}");
@@ -89,6 +85,26 @@ impl Display for FileData {
             );
         }
 
+        let last_accessed = self.last_accessed_time();
+        let last_modified = self.last_modified_time();
+
+        let last_accessed = format_timestamp(last_accessed);
+        let last_modified = format_timestamp(last_modified);
+
+        table.add_row(
+            Row::new()
+                .with_cell("last modified:")
+                .with_cell(last_modified)
+                .with_cell(""),
+        );
+
+        table.add_row(
+            Row::new()
+                .with_cell("last accessed:")
+                .with_cell(last_accessed)
+                .with_cell(""),
+        );
+
         write!(f, "{}", table)
     }
 }
@@ -136,6 +152,16 @@ impl FileData {
     /// Returns the size of the file in a Display-capable struct
     pub fn size(&self) -> Bytes {
         Bytes::new(self.stat.size() as u64)
+    }
+
+    /// Returns the file`s last accessed time represented in Unix timestamp
+    pub fn last_accessed_time(&self) -> u64 {
+        self.stat.accessed()
+    }
+
+    /// Returns the file`s last modified time represented in Unix timestamp
+    pub fn last_modified_time(&self) -> u64 {
+        self.stat.modified()
     }
 
     /// Returns the user id (uid) and username of the user that owns the file represented by `self`.

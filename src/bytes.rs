@@ -28,3 +28,44 @@ impl std::fmt::Display for Bytes {
         write!(f, "{}B", Bytes::UNIT_PREFIXES[exponent as usize])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pretty_bytes_formatting() {
+        fn format_bytes(bytes: u64) -> String {
+            format!("{}", Bytes::new(bytes))
+        }
+        let b = 1;
+        let kb = b * 1000;
+        let mb = kb * 1000;
+        let gb = mb * 1000;
+
+        assert_eq!("0 B", format_bytes(0));
+        assert_eq!("1.00 B", format_bytes(b));
+        assert_eq!("999.00 B", format_bytes(b * 999));
+        assert_eq!("12.00 MB", format_bytes(mb * 12));
+        assert_eq!("123.00 MB", format_bytes(mb * 123));
+        assert_eq!("5.50 MB", format_bytes(mb * 5 + kb * 500));
+        assert_eq!("7.54 GB", format_bytes(gb * 7 + 540 * mb));
+        assert_eq!("1.20 TB", format_bytes(gb * 1200));
+
+        // bytes
+        assert_eq!("234.00 B", format_bytes(234));
+        assert_eq!("999.00 B", format_bytes(999));
+        // kilobytes
+        assert_eq!("2.23 kB", format_bytes(2234));
+        assert_eq!("62.50 kB", format_bytes(62500));
+        assert_eq!("329.99 kB", format_bytes(329990));
+        // megabytes
+        assert_eq!("2.75 MB", format_bytes(2750000));
+        assert_eq!("55.00 MB", format_bytes(55000000));
+        assert_eq!("987.65 MB", format_bytes(987654321));
+        // gigabytes
+        assert_eq!("5.28 GB", format_bytes(5280000000));
+        assert_eq!("95.20 GB", format_bytes(95200000000));
+        assert_eq!("302.00 GB", format_bytes(302000000000));
+    }
+}
