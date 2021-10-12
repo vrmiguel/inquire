@@ -33,8 +33,7 @@ pub fn format_timestamp(timestamp: u64) -> String {
 
     let mut char_buf = [0; BUF_SIZ];
 
-    // RFC3339 timestamp
-    let format = cstr!("%Y-%m-%dT%T");
+    let format = cstr!("%A %b/%d/%Y %H:%M:%S");
 
     unsafe {
         strftime(
@@ -53,23 +52,21 @@ pub fn format_timestamp(timestamp: u64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
     use chrono::Local;
 
     use super::format_timestamp;
 
     #[test]
-    fn rfc3339_formatting() {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-
+    fn timestamp_formatting() {
         // We'll use the chrono crate to make sure that
         // our own formatting (done through libc's strftime) works
         let date_time = Local::now();
 
-        // YYYY-MM-DDThh:mm:ss
-        let rfc3339 = date_time.format("%Y-%m-%dT%T").to_string();
+        let chrono_formatted = date_time.format("%A %b/%d/%Y %H:%M:%S").to_string();
 
-        assert_eq!(&rfc3339, &format_timestamp(now.as_secs()));
+        assert_eq!(
+            &chrono_formatted,
+            &format_timestamp(date_time.timestamp() as u64)
+        );
     }
 }
