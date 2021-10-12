@@ -50,16 +50,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "filemagic"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0ab576ac8d15cf0e281ae7d4b27cccce08486264c843aa19d624f741a7717ed"
-dependencies = [
- "bitflags",
- "libc",
-]
-
-[[package]]
 name = "fs-err"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -101,7 +91,6 @@ name = "inquire"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "filemagic",
  "fs-err",
  "goblin",
  "infer",
@@ -111,6 +100,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "unix_mode",
+ "wizardry",
 ]
 
 [[package]]
@@ -381,3 +371,12 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "wizardry"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "libc",
+ "thiserror",
+]

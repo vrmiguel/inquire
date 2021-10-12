@@ -1,13 +1,12 @@
 use std::{fmt::Display, path::PathBuf};
 
-use filemagic::Magic;
 use fs_err as fs;
 use goblin::Object;
 use infer::Type;
 use libc::{S_IRWXG, S_IRWXO, S_IRWXU, S_IXUSR};
 use memmap::MmapOptions;
 use tabular::{Row, Table};
-// use terminal_size::{Width, terminal_size};
+use wizardry::Magic;
 
 use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, time_fmt::format_timestamp, user};
 
@@ -15,7 +14,7 @@ use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, time_fmt::format_t
 pub struct FileData {
     path: PathBuf,
     stat: Lstat,
-    magic: Option<Magic>,
+    magic_cookie: Option<Magic>,
 }
 
 fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -115,17 +114,10 @@ impl FileData {
     /// println!("{}", cargo_toml.size());
     /// ```
     pub fn read(path: PathBuf) -> Result<Self> {
-        let init_magic = || {
-            let magic = Magic::open(Default::default()).ok()?;
-            magic.load::<String>(&[]).ok()?;
-
-            Some(magic)
-        };
-
         Ok(Self {
             stat: Lstat::lstat(&path)?,
             path,
-            magic: init_magic(),
+            magic_cookie: Magic::new().ok(),
         })
     }
 
@@ -133,13 +125,13 @@ impl FileData {
     pub fn libmagic_mime_type(&self) -> Option<String> {
         let file = |magic: &Magic| magic.file(&self.path).ok();
 
-        self.magic.as_ref().and_then(file)
+        self.magic_cookie.as_ref().and_then(file)
     }
 
     /// Attempts to read the file's MIME type through the `infer` crate.
     /// This is used as a fallback method since getting this data through libmagic
     /// yields more information.
-    pub fn fallback_mime_type(&self) -> Option<&str> {
+    pub fn fallback_mime_type(&self) -> Option<&'static str> {
         let mime = |t: Type| t.mime_type();
 
         infer::get_from_path(&self.path).ok()?.map(mime)
