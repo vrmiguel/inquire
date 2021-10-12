@@ -1,10 +1,7 @@
-use std::{
-    fmt::Display,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fmt::Display, path::PathBuf};
 
 use filemagic::Magic;
+use fs_err as fs;
 use goblin::Object;
 use infer::Type;
 use libc::{S_IRWXG, S_IRWXO, S_IRWXU, S_IXUSR};
@@ -110,15 +107,14 @@ impl Display for FileData {
 }
 
 impl FileData {
+    /// Important: assumes that the given path is canonical.
     /// ```rust
     /// use inquire::FileData;
     ///
     /// let cargo_toml = FileData::read("Cargo.toml").unwrap();
     /// println!("{}", cargo_toml.size());
     /// ```
-    pub fn read(path: impl AsRef<Path>) -> Result<Self> {
-        let path = fs::canonicalize(path)?;
-
+    pub fn read(path: PathBuf) -> Result<Self> {
         let init_magic = || {
             let magic = Magic::open(Default::default()).ok()?;
             magic.load::<String>(&[]).ok()?;
@@ -215,7 +211,7 @@ impl FileData {
         };
 
         let file = fs::File::open(&self.path).ok()?;
-        let map = unsafe { MmapOptions::new().map(&file) }.ok()?;
+        let map = unsafe { MmapOptions::new().map(file.file()) }.ok()?;
 
         Object::parse(&map).ok().and_then(get_libraries)
     }

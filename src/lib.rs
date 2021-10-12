@@ -6,4 +6,5 @@ mod lstat;
 mod time_fmt;
 mod user;
 
+pub use error::{Error, Result};
 pub use file_data::FileData;

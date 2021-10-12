@@ -74,6 +74,6 @@ mod tests {
         // YYYY-MM-DDThh:mm:ss
         let rfc3339 = date_time.format("%Y-%m-%dT%T").to_string();
 
-        assert_eq!(&rfc3339, &format_timestamp(now));
+        assert_eq!(&rfc3339, &format_timestamp(now.as_secs()));
     }
 }
