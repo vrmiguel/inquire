@@ -110,7 +110,7 @@ impl FileData {
     /// ```rust
     /// use inquire::FileData;
     ///
-    /// let cargo_toml = FileData::read("Cargo.toml").unwrap();
+    /// let cargo_toml = FileData::read("Cargo.toml".into()).unwrap();
     /// println!("{}", cargo_toml.size());
     /// ```
     pub fn read(path: PathBuf) -> Result<Self> {

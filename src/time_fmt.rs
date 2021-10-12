@@ -1,8 +1,6 @@
-use std::{
-    ffi::{CStr, CString},
-    mem,
-};
+use std::{ffi::CStr, mem};
 
+use cstr::cstr;
 use libc::{c_char, localtime_r, size_t, time, tm};
 
 const BUF_SIZ: usize = 64;
@@ -36,9 +34,7 @@ pub fn format_timestamp(timestamp: u64) -> String {
     let mut char_buf = [0; BUF_SIZ];
 
     // RFC3339 timestamp
-    // Safety: this unwrap is safe since CString::new only fails when
-    // the given string has an interior nul char.
-    let format = CString::new("%Y-%m-%dT%T").unwrap();
+    let format = cstr!("%Y-%m-%dT%T");
 
     unsafe {
         strftime(

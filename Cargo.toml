@@ -17,6 +17,7 @@ chrono = "0.4.19"
 
 wizardry = { path = "./wizardry" }
 
+cstr = "0.2.9"
 libc = "0.2.103"
 thiserror = "1.0.29"
 infer = "0.5.0"
