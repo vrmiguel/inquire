@@ -20,10 +20,12 @@
 · ld-linux-x86-64.so.2
 
 [file info]
-size:                   1.25 MB   
-permissions:            -rwxr-xr-x      0755
-owner:                  root            0
-owner's group:          root            0
+size:                   1.25 MB                     
+permissions:            -rwxr-xr-x                      0755
+owner:                  root                            0
+owner's group:          root                            0
+last modified:          Tuesday Oct/12/2021 18:29:29
+last accessed:          Tuesday Oct/12/2021 18:29:29
 ```
 
 ## To-do list
@@ -35,5 +37,9 @@ owner's group:          root            0
 - [x] Show the username of the file's owner
 - [x] Show the user group of the file's owner
 - [x] If the file is an executable, try to show its dynamic dependencies, if any exist
-- [ ] Show last modified date
-- [ ] Show last accessed date
+- [x] Show last modified date
+- [x] Show last accessed date
+- [ ] Add tests to `wizardry`, our `libmagic` bindings crate.
+- [ ] Allow building `libmagic` statically (or at least make ir work properly when built with MUSL)
+- [ ] Generally improve the output: better formatting, colors, etc.
+- [ ] Command-line options and flags?
