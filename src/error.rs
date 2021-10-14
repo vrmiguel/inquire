@@ -11,6 +11,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("libmagic error: {0}")]
     Magic(#[from] wizardry::error::Error),
+    #[error("UnixString error: {0}")]
+    UnixString(#[from] unixstring::Error)
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

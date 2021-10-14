@@ -1,4 +1,4 @@
-use std::{fmt::Display, path::PathBuf};
+use std::fmt::Display;
 
 use fs_err as fs;
 use goblin::Object;
@@ -6,13 +6,14 @@ use infer::Type;
 use libc::{S_IRWXG, S_IRWXO, S_IRWXU, S_IXUSR};
 use memmap::MmapOptions;
 use tabular::{Row, Table};
+use unixstring::UnixString;
 use wizardry::Magic;
 
 use crate::{bytes::Bytes, error::Result, group, lstat::Lstat, time_fmt::format_timestamp, user};
 
 #[non_exhaustive]
 pub struct FileData {
-    path: PathBuf,
+    path: UnixString,
     stat: Lstat,
     magic_cookie: Option<Magic>,
 }
@@ -27,7 +28,7 @@ fn libmagic_display(mime_msg: String, f: &mut std::fmt::Formatter) -> std::fmt::
 
 impl Display for FileData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, "[{}]", self.path.display())?;
+        writeln!(f, "[{}]", self.path.as_path().display())?;
 
         let mut table = Table::new("{:<}\t\t{:<}\t{:<}");
 
@@ -109,11 +110,15 @@ impl FileData {
     /// Important: assumes that the given path is canonical.
     /// ```rust
     /// use inquire::FileData;
+    /// use unixstring::UnixString;
     ///
-    /// let cargo_toml = FileData::read("Cargo.toml".into()).unwrap();
+    /// let mut unx = UnixString::new();
+    /// unx.push("Cargo.toml");
+    /// 
+    /// let cargo_toml = FileData::read(unx).unwrap();
     /// println!("{}", cargo_toml.size());
     /// ```
-    pub fn read(path: PathBuf) -> Result<Self> {
+    pub fn read(path: UnixString) -> Result<Self> {
         Ok(Self {
             stat: Lstat::lstat(&path)?,
             path,

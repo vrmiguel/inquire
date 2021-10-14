@@ -1,10 +1,12 @@
 mod ffi;
 pub mod error;
 
-use std::{ffi::{CStr, CString}, io, path::Path};
+use std::io;
 
+pub use unixstring;
 use bitflags::bitflags;
 use libc::c_int;
+use unixstring::UnixString;
 
 use crate::error::{Error, Result};
 
@@ -57,12 +59,8 @@ impl Magic {
         })
     }
 
-    pub fn file(&self, path: impl AsRef<Path>) -> Result<String> {
+    pub fn file(&self, path: &UnixString) -> Result<String> {
 
-        use std::os::unix::prelude::OsStrExt;
-
-        // TODO: try to do this with CStr only
-        let path = CString::new(path.as_ref().as_os_str().as_bytes())?;
         let description = unsafe {
             ffi::magic_file(self.inner, path.as_ptr())
         };
@@ -71,10 +69,8 @@ impl Magic {
             return Err(Error::Io(io::Error::last_os_error()));
         }
 
+        let description = unsafe { UnixString::from_ptr(description) };
 
-        let description = unsafe { CStr::from_ptr(description) };
-        let description = String::from_utf8_lossy(description.to_bytes());
-
-        Ok(description.into())
+        Ok(description.to_string_lossy().into())
     }
 }

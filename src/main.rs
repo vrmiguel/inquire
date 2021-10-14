@@ -1,7 +1,8 @@
-use std::{env, path::PathBuf};
+use std::{convert::TryFrom, env, path::PathBuf};
 
 use fs_err as fs;
 use inquire::FileData;
+use unixstring::UnixString;
 
 fn main() {
     if let Err(err) = run() {
@@ -15,8 +16,8 @@ fn run() -> inquire::Result<()> {
         .map(PathBuf::from)
         .map(fs::canonicalize)
     {
-        let path = result?;
-        let file_data = FileData::read(path)?;
+        let unix_string = UnixString::try_from(result?)?;
+        let file_data = FileData::read(unix_string)?;
         println!("{}", file_data);
     }
 
