@@ -39,12 +39,12 @@ impl Lstat {
         self.inner.st_blocks
     }
 
-    pub const fn accessed(&self) -> u64 {
-        self.inner.st_atime as u64
+    pub const fn accessed(&self) -> i64 {
+        self.inner.st_atime
     }
 
-    pub const fn modified(&self) -> u64 {
-        self.inner.st_mtime as u64
+    pub const fn modified(&self) -> i64 {
+        self.inner.st_mtime
     }
 
     pub const fn owner_user_id(&self) -> u32 {
@@ -103,6 +103,6 @@ mod tests {
         let unx = UnixString::try_from(path.to_owned()).unwrap();
         let stat = Lstat::lstat(&unx).unwrap();
 
-        assert_eq!(mod_timestamp, stat.modified());
+        assert_eq!(mod_timestamp, stat.modified() as u64);
     }
 }

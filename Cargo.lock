@@ -352,9 +352,9 @@ checksum = "8e0c0d1a8bc250d3f72da7c7b004a99899f7795cc6e8209aeaed1a9485563167"
 
 [[package]]
 name = "unixstring"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb9f83cf78480f0ee62801e8d10a620f3635d680948ac9b3edd1125877414117"
+checksum = "73add5a3ae33b83aa0ee825121c12df1d13e002a9f232ed94dab54d3a8f27d39"
 dependencies = [
  "libc",
  "thiserror",

@@ -1,7 +1,10 @@
-use std::{ffi::CStr, mem};
+use std::{
+    mem::{self, MaybeUninit},
+};
 
 use cstr::cstr;
-use libc::{c_char, localtime_r, size_t, time, tm};
+use libc::{c_char, localtime_r, size_t, tm};
+use unixstring::UnixString;
 
 const BUF_SIZ: usize = 64;
 
@@ -16,22 +19,19 @@ extern "C" {
     pub fn tzset();
 }
 
-pub fn format_timestamp(timestamp: u64) -> String {
-    let mut timestamp = timestamp;
-
+pub fn format_timestamp(timestamp: i64) -> String {
     // Safety: the all-zero byte-pattern is valid struct tm
     let mut new_time: tm = unsafe { mem::zeroed() };
 
     // Safety: time is memory-safe
     // TODO: it'd be better to call `time(NULL)` here
-    let ltime = unsafe { time(&mut timestamp as *mut u64 as *mut i64) };
 
     unsafe { tzset() };
 
     // Safety: localtime_r is memory safe, thread-safe.
-    unsafe { localtime_r(&ltime as *const i64, &mut new_time as *mut tm) };
+    unsafe { localtime_r(&timestamp as *const i64, &mut new_time as *mut tm) };
 
-    let mut char_buf = [0; BUF_SIZ];
+    let mut char_buf: [c_char; BUF_SIZ] = unsafe { MaybeUninit::uninit().assume_init() };
 
     let format = cstr!("%A %b/%d/%Y %H:%M:%S");
 
@@ -44,10 +44,9 @@ pub fn format_timestamp(timestamp: u64) -> String {
         )
     };
 
-    let c_str = unsafe { CStr::from_ptr(char_buf.as_ptr()) };
-    let utf8_encoded = c_str.to_string_lossy();
+    let timestamp = unsafe { UnixString::from_ptr(char_buf.as_ptr()) };
 
-    utf8_encoded.into()
+    timestamp.into_string_lossy()
 }
 
 #[cfg(test)]
@@ -66,7 +65,7 @@ mod tests {
 
         assert_eq!(
             &chrono_formatted,
-            &format_timestamp(date_time.timestamp() as u64)
+            &format_timestamp(date_time.timestamp())
         );
     }
 }

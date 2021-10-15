@@ -114,7 +114,7 @@ impl FileData {
     ///
     /// let mut unx = UnixString::new();
     /// unx.push("Cargo.toml");
-    /// 
+    ///
     /// let cargo_toml = FileData::read(unx).unwrap();
     /// println!("{}", cargo_toml.size());
     /// ```
@@ -148,12 +148,12 @@ impl FileData {
     }
 
     /// Returns the file`s last accessed time represented in Unix timestamp
-    pub fn last_accessed_time(&self) -> u64 {
+    pub fn last_accessed_time(&self) -> i64 {
         self.stat.accessed()
     }
 
     /// Returns the file`s last modified time represented in Unix timestamp
-    pub fn last_modified_time(&self) -> u64 {
+    pub fn last_modified_time(&self) -> i64 {
         self.stat.modified()
     }
 

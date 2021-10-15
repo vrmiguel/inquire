@@ -71,6 +71,6 @@ impl Magic {
 
         let description = unsafe { UnixString::from_ptr(description) };
 
-        Ok(description.to_string_lossy().into())
+        Ok(description.into_string_lossy())
     }
 }

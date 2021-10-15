@@ -1,6 +1,5 @@
-use std::ffi::CStr;
-
 use libc::{getgrgid, group};
+use unixstring::UnixString;
 
 pub fn get_group_name(gid: u32) -> Option<String> {
     // TODO: investigate if it'd be important to use getgrgid_r here
@@ -14,8 +13,7 @@ pub fn get_group_name(gid: u32) -> Option<String> {
     // Dereferencing it is safe, therefore.
     let grp = unsafe { *grp };
 
-    let group_name = unsafe { CStr::from_ptr(grp.gr_name) };
-    let group_name = String::from_utf8_lossy(group_name.to_bytes());
+    let group_name = unsafe { UnixString::from_ptr(grp.gr_name) }.into_string_lossy();
 
-    Some(group_name.into())
+    Some(group_name)
 }
