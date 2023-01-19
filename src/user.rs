@@ -1,7 +1,9 @@
-use std::{mem::{self, MaybeUninit}, ptr};
+use std::{mem, ptr};
 
 use libc::{c_char, getpwuid_r, passwd};
 use unixstring::UnixString;
+
+use crate::uninitialized;
 
 // fn real_user_id() -> u32 {
 //     // Safety: the POSIX Programmer's Manual states that
@@ -17,9 +19,9 @@ use unixstring::UnixString;
 
 pub fn get_username(uid: u32) -> Option<String> {
     const BUF_SIZ: usize = 2048;
-    let mut buf: [c_char; BUF_SIZ] = unsafe { MaybeUninit::uninit().assume_init() };
+    let mut buf: [c_char; BUF_SIZ] = unsafe { uninitialized() };
     let mut result = ptr::null_mut();
-    
+
     // Safety: the all-zero byte pattern is a valid struct passwd
     let mut passwd: passwd = unsafe { mem::zeroed() };
 

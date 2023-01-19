@@ -1,10 +1,10 @@
-use std::{
-    mem::{self, MaybeUninit},
-};
+use std::mem;
 
 use cstr::cstr;
 use libc::{c_char, localtime_r, size_t, tm};
 use unixstring::UnixString;
+
+use crate::uninitialized;
 
 const BUF_SIZ: usize = 64;
 
@@ -23,15 +23,14 @@ pub fn format_timestamp(timestamp: i64) -> String {
     // Safety: the all-zero byte-pattern is valid struct tm
     let mut new_time: tm = unsafe { mem::zeroed() };
 
-    // Safety: time is memory-safe
-    // TODO: it'd be better to call `time(NULL)` here
-
     unsafe { tzset() };
 
     // Safety: localtime_r is memory safe, thread-safe.
     unsafe { localtime_r(&timestamp as *const i64, &mut new_time as *mut tm) };
 
-    let mut char_buf: [c_char; BUF_SIZ] = unsafe { MaybeUninit::uninit().assume_init() };
+    // Safety: it's ok for this to be uninitialized since `strftime` will
+    // null-terminate this c-string
+    let mut char_buf: [c_char; BUF_SIZ] = unsafe { uninitialized() };
 
     let format = cstr!("%A %b/%d/%Y %H:%M:%S");
 
@@ -63,9 +62,6 @@ mod tests {
 
         let chrono_formatted = date_time.format("%A %b/%d/%Y %H:%M:%S").to_string();
 
-        assert_eq!(
-            &chrono_formatted,
-            &format_timestamp(date_time.timestamp())
-        );
+        assert_eq!(&chrono_formatted, &format_timestamp(date_time.timestamp()));
     }
 }

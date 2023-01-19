@@ -1,11 +1,11 @@
-mod ffi;
 pub mod error;
 
 use std::io;
 
-pub use unixstring;
 use bitflags::bitflags;
 use libc::c_int;
+use magic_sys::{magic_close, magic_file, magic_load, magic_open, magic_t};
+pub use unixstring;
 use unixstring::UnixString;
 
 use crate::error::{Error, Result};
@@ -20,50 +20,40 @@ bitflags! {
 }
 
 pub struct Magic {
-    inner: *const ffi::Magic
+    inner: magic_t,
 }
 
 impl Drop for Magic {
     fn drop(&mut self) {
         unsafe {
-            ffi::magic_close(self.inner);
+            magic_close(self.inner);
         }
     }
 }
 
 impl Magic {
-
     fn io_err_from_errno() -> Error {
         Error::Io(io::Error::last_os_error())
     }
 
     pub fn new() -> Result<Magic> {
-        let inner = unsafe {
-            ffi::magic_open(Flags::DEFAULT_WITH_ERRORS.bits())
-        };
+        let inner = unsafe { magic_open(Flags::DEFAULT_WITH_ERRORS.bits()) };
 
         if inner.is_null() {
             return Err(Self::io_err_from_errno());
         }
 
-        let ret = unsafe {
-            ffi::magic_load(inner, std::ptr::null())
-        };
+        let ret = unsafe { magic_load(inner, std::ptr::null()) };
 
         if ret != 0 {
             return Err(Self::io_err_from_errno());
         }
 
-        Ok(Self {
-            inner
-        })
+        Ok(Self { inner })
     }
 
     pub fn file(&self, path: &UnixString) -> Result<String> {
-
-        let description = unsafe {
-            ffi::magic_file(self.inner, path.as_ptr())
-        };
+        let description = unsafe { magic_file(self.inner, path.as_ptr()) };
 
         if description.is_null() {
             return Err(Error::Io(io::Error::last_os_error()));

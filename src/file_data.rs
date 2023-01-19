@@ -61,7 +61,7 @@ impl Display for FileData {
             Row::new()
                 .with_cell("permissions:")
                 .with_cell(permission)
-                .with_cell(format!("0{:o}", mode)),
+                .with_cell(format_args!("0{:o}", mode)),
         );
 
         if let Some((uid, username)) = self.owner_user() {
@@ -173,11 +173,9 @@ impl FileData {
 
     /// Returns the raw permission bits of this file, alongside a `ls`-like representation of said file permissions.
     pub fn permissions(&self) -> (u32, String) {
+        let permission_bits = (S_IRWXU | S_IRWXG | S_IRWXO) as u32;
         let mode = self.stat.mode();
-        (
-            mode & (S_IRWXU | S_IRWXG | S_IRWXO),
-            unix_mode::to_string(mode),
-        )
+        (mode & permission_bits, unix_mode::to_string(mode))
     }
 
     /// Returns true if this file is in the `application`
@@ -190,7 +188,7 @@ impl FileData {
 
     /// Returns true if this file has the executable bit turned on
     pub fn is_executable(&self) -> bool {
-        (self.stat.mode() & S_IXUSR) != 0
+        (self.stat.mode() & (S_IXUSR as u32)) != 0
     }
 
     /// If this file is a dynamically-linked binary, this file will attempt to retrieve the

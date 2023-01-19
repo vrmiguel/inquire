@@ -20,7 +20,7 @@ impl Lstat {
     }
 
     pub const fn mode(&self) -> u32 {
-        self.inner.st_mode
+        self.inner.st_mode as u32
     }
 
     pub const fn size(&self) -> i64 {
@@ -28,7 +28,7 @@ impl Lstat {
     }
 
     pub const fn block_size(&self) -> i64 {
-        self.inner.st_blksize
+        self.inner.st_blksize as i64
     }
 
     pub fn permissions(&self) -> Permissions {
