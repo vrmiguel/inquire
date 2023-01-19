@@ -1,3 +1,7 @@
+// Allow since these casts are not "unnecessary" in all platforms, e.g. `st_blksize` on macOS aarch64
+// is an i32.
+#![allow(clippy::unnecessary_cast)]
+
 use std::fs::Permissions;
 use std::mem;
 use std::os::unix::fs::PermissionsExt;
@@ -7,13 +11,14 @@ use unixstring::UnixString;
 
 use crate::error::{Error, Result};
 
+
 pub struct Lstat {
     inner: libc::stat,
 }
 
 #[allow(dead_code)]
 impl Lstat {
-    pub fn lstat(path: &UnixString) -> Result<Self> {
+    pub fn new(path: &UnixString) -> Result<Self> {
         Ok(Self {
             inner: _lstat(path)?,
         })
@@ -84,7 +89,7 @@ mod tests {
         let permissions = path.metadata().unwrap().permissions();
         let path = UnixString::try_from(path).unwrap();
 
-        assert_eq!(permissions, Lstat::lstat(&path).unwrap().permissions());
+        assert_eq!(permissions, Lstat::new(&path).unwrap().permissions());
     }
 
     #[test]
@@ -101,7 +106,7 @@ mod tests {
             .as_secs();
 
         let unx = UnixString::try_from(path.to_owned()).unwrap();
-        let stat = Lstat::lstat(&unx).unwrap();
+        let stat = Lstat::new(&unx).unwrap();
 
         assert_eq!(mod_timestamp, stat.modified() as u64);
     }

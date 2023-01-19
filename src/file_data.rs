@@ -1,3 +1,7 @@
+// Allow since these casts are not "unnecessary" in all platforms, e.g. `S_IXUSR` on macOS aarch64
+// is not a u32.
+#![allow(clippy::unnecessary_cast)]
+
 use std::fmt::Display;
 
 use fs_err as fs;
@@ -42,7 +46,7 @@ impl Display for FileData {
             if let Some(libraries) = self.read_dynamic_dependencies() {
                 writeln!(f, "\n[dependencies]")?;
                 for library in libraries {
-                    writeln!(f, "· {}", library)?;
+                    writeln!(f, "· {library}")?;
                 }
             }
         }
@@ -61,7 +65,7 @@ impl Display for FileData {
             Row::new()
                 .with_cell("permissions:")
                 .with_cell(permission)
-                .with_cell(format_args!("0{:o}", mode)),
+                .with_cell(format_args!("0{mode:o}")),
         );
 
         if let Some((uid, username)) = self.owner_user() {
@@ -102,7 +106,7 @@ impl Display for FileData {
                 .with_cell(""),
         );
 
-        write!(f, "{}", table)
+        write!(f, "{table}")
     }
 }
 
@@ -120,7 +124,7 @@ impl FileData {
     /// ```
     pub fn read(path: UnixString) -> Result<Self> {
         Ok(Self {
-            stat: Lstat::lstat(&path)?,
+            stat: Lstat::new(&path)?,
             path,
             magic_cookie: Magic::new().ok(),
         })

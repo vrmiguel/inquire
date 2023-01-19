@@ -19,7 +19,7 @@ impl std::fmt::Display for Bytes {
         let num = self.bytes;
         debug_assert!(num >= 0.0);
         if num < 1_f64 {
-            return write!(f, "{} B", num);
+            return write!(f, "{num} B");
         }
         let delimiter = 1000_f64;
         let exponent = cmp::min((num.ln() / 6.90775).floor() as i32, 4);

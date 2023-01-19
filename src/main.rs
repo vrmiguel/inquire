@@ -6,7 +6,7 @@ use unixstring::UnixString;
 
 fn main() {
     if let Err(err) = run() {
-        println!("Error: {}", err);
+        println!("Error: {err}");
     }
 }
 
@@ -18,7 +18,7 @@ fn run() -> inquire::Result<()> {
     {
         let unix_string = UnixString::try_from(result?)?;
         let file_data = FileData::read(unix_string)?;
-        println!("{}", file_data);
+        println!("{file_data}");
     }
 
     Ok(())
